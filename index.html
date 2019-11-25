@@ -31,6 +31,31 @@ function quiz(gridsize) {
 	}
 }
 
+function makeBounds(marginWidth, backgroundColor, ms) {
+	var circle = new Shape.Rectangle([marginWidth, marginWidth], 2 * marginWidth);
+	circle.fillColor = backgroundColor;
+	circle.fillColor.hue = 100;
+	circle.tween({
+		'position.x': view.bounds.width - 2 * marginWidth,
+		'fillColor.hue': 300
+	}, {
+	    duration: ms
+	});
+
+	var edge = new Shape.Rectangle(
+		marginWidth / 2, marginWidth / 2,
+		view.bounds.width - marginWidth, view.bounds.height - marginWidth
+	);
+	edge.strokeColor = backgroundColor;
+	edge.strokeWidth = marginWidth;
+	edge.strokeColor.hue = 100;
+	edge.tween({
+		'strokeColor.hue': 300
+	}, {
+		duration: ms
+	});
+}
+
 var levelSize = [4, 6, 8, 10, 12, 16, 25, 32, 50, 64];
 
 function onResize(event) {
@@ -44,16 +69,18 @@ function onResize(event) {
 
 	// Create a path that fills the view, and fill it with
 	// the average color of the raster:
+	var backgroundColor = raster.getAverageColor(view.bounds);
 	new Path.Rectangle({
 		rectangle: view.bounds,
-		fillColor: raster.getAverageColor(view.bounds)
+		fillColor: backgroundColor
 	});
 
 	var level = 0;
 	function quizTimer(){
 		quiz(levelSize[level]);
+		makeBounds(15, backgroundColor, 10000);
 		level++;
-		setTimeout(quizTimer, 1000);
+		setTimeout(quizTimer, 10000);
 	}
 	quizTimer();
 }
