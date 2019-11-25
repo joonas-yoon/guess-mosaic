@@ -3,22 +3,18 @@
 <head>
 <style>
     body { background: black; }
+    img.src { display: none; }
 </style>
 <script type="text/javascript" src="js/paperjs/dist/paper-full.min.js"></script>
 <script type="text/paperscript" canvas="canvas">
 // Create a raster item:
 var raster = new Raster('marilyn');
-var loaded = false;
-
-raster.on('load', function() {
-	loaded = true;
-	onResize();
-});
-
-// Make the raster invisible:
+raster.on('load', start);
 raster.visible = false;
 
 function quiz(gridsize) {
+	project.activeLayer.removeChildren();
+
 	var cellsize = Math.min(view.bounds.width, view.bounds.height) / gridsize;
 	for(var r=0; r < view.bounds.height / cellsize; ++r){
 		for(var c=0; c < view.bounds.width / cellsize; ++c){
@@ -56,13 +52,28 @@ function makeBounds(marginWidth, backgroundColor, ms) {
 	});
 }
 
-var levelSize = [4, 6, 8, 10, 12, 16, 25, 32, 50, 64];
+var gameovered = false;
 
-function onResize(event) {
-	if (!loaded)
-		return;
-	project.activeLayer.removeChildren();
+function gameover() {
+	if(gameovered) return;
+	gameovered = true;
+	var r = new Raster('marilyn');
+	r.visible = false;
+	r.opacity = 0;
+	r.on('load', function(){
+		r.fitBounds(view.bounds, true);
+		r.visible = true;
+		r.tween({
+			opacity: 1.0
+		}, {
+			duration: 2000
+		});
+	});
+}
 
+var levelSize = [4, 6, 8, 10, 12, 16, 24, 32, 64];
+
+function start(event) {
 	// Transform the raster so that it fills the bounding rectangle
 	// of the view:
 	raster.fitBounds(view.bounds, true);
@@ -70,19 +81,19 @@ function onResize(event) {
 	// Create a path that fills the view, and fill it with
 	// the average color of the raster:
 	var backgroundColor = raster.getAverageColor(view.bounds);
-	new Path.Rectangle({
-		rectangle: view.bounds,
-		fillColor: backgroundColor
-	});
 
 	var level = 0;
-	function quizTimer(){
+	(function quizTimer(){
+		console.log(level);
+		if(level >= levelSize.length){
+			gameover();
+			return;
+		}
 		quiz(levelSize[level]);
-		makeBounds(15, backgroundColor, 10000);
+		makeBounds(15, backgroundColor, 10 * 1000);
+		setTimeout(quizTimer, 10 * 1000);
 		level++;
-		setTimeout(quizTimer, 10000);
-	}
-	quizTimer();
+	})();
 }
 </script>
 </head>
